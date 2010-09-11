@@ -16,6 +16,7 @@
 use strict;
 use Parse::Win32Registry qw(:REG_);
 use Getopt::Long;
+use File::Spec;
 
 # Included to permit compiling via Perl2Exe
 #perl2exe_include "Parse/Win32Registry/Key.pm";
@@ -26,7 +27,7 @@ my %config;
 Getopt::Long::Configure("prefix_pattern=(-|\/)");
 GetOptions(\%config,qw(reg|r=s file|f=s csv|c guess|g plugin|p=s list|l help|?|h));
 
-my $plugindir = "plugins\\";
+my $plugindir = File::Spec->catfile("plugins");
 my $VERSION = "20080419";
 
 if ($config{help} || !%config) {
@@ -48,7 +49,7 @@ if ($config{list}) {
 	foreach my $p (@plugins) {
 		next unless ($p =~ m/\.pl$/);
 		my $pkg = (split(/\./,$p,2))[0];
-		$p = $plugindir.$p;
+		$p = File::Spec->catfile($plugindir,$p);
 		eval {
 			require $p;
 			my $hive    = $pkg->getHive();
@@ -89,7 +90,8 @@ if ($config{file}) {
 	}
 	foreach my $i (sort {$a <=> $b} keys %plugins) {
 		eval {
-			require "plugins\\".$plugins{$i}."\.pl";
+			my $plugin_file = File::Spec->catfile($plugindir, $plugins{$i}.".pl");
+			require $plugin_file;
 			$plugins{$i}->pluginmain($hive);
 		};
 		if ($@) {
@@ -225,7 +227,7 @@ sub parsePluginsFile {
 # Parse a file containing a list of plugins
 # Future versions of this tool may allow for the analyst to 
 # choose different plugins files	
-	my $pluginfile = $plugindir.$file;
+	my $pluginfile = File::Spec->catfile($plugindir,$file);
 	if (-e $pluginfile) {
 		open(FH,"<",$pluginfile);
 		my $count = 1;
