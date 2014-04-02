@@ -31,6 +31,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching assoc v.".$VERSION);
+	::rptMsg("assoc v.".$VERSION); # banner
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 

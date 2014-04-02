@@ -2,7 +2,12 @@
 # sfc.pl
 # Check SFC settings in the Registry
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# History
+#   20100305 - updated
+#
+#
+#
+# copyright 2010 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package sfc;
 use strict;
@@ -12,12 +17,12 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20080909);
+              version       => 20100305);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return " -- ";	
+	return "Get SFC values";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -30,11 +35,15 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching sfc v.".$VERSION);
+	::rptMsg("sfc v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key_path = "Microsoft\\Windows NT\\CurrentVersion\\Winlogon";
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
+		::rptMsg("sfc v.".$VERSION);
+		::rptMsg("");
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 		::rptMsg("");
@@ -44,7 +53,7 @@ sub pluginmain {
 				my $name = $v->get_name();
 				next unless ($name =~ m/^sfc/i);
 				my $str;
-				if ($name =~ m/^sfcquota$/i) {
+				if ($name =~ m/^sfcquota$/i || $name =~ m/^sfcdisable$/i) {
 					$str = sprintf "  %-20s  0x%08x",$name,$v->get_data();
 				}
 				else {
@@ -78,7 +87,7 @@ sub pluginmain {
 				my $name = $v->get_name();
 				next unless ($name =~ m/^sfc/i);
 				my $str;
-				if ($name =~ m/^sfcquota$/i) {
+				if ($name =~ m/^sfcquota$/i || $name =~ m/^sfcdisable$/i) {
 					$str = sprintf "  %-20s  0x%08x",$name,$v->get_data();
 				}
 				else {

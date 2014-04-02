@@ -3,7 +3,11 @@
 # Get USB device info from the DeviceClasses keys in the System
 # hive (Disks and Volumes GUIDs)
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# Change History:
+#   20100901 - spelling error in output corrected
+#   20080331 - created
+#
+# copyright 2010 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package devclass;
 use strict;
@@ -13,7 +17,7 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20080331);
+              version       => 20100901);
 
 sub getConfig{return %config}
 
@@ -31,6 +35,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching devclass v.".$VERSION);
+	::rptMsg("devclass v.".$VERSION); # banner
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -104,7 +110,7 @@ sub pluginmain {
 			foreach my $t (reverse sort {$a <=> $b} keys %vols) {
 				::rptMsg(gmtime($t)." (UTC)");
 				foreach my $item (@{$vols{$t}}) {
-					::rptMsg("\tParentPrefixID: ".$item);
+					::rptMsg("\tParentIdPrefix: ".$item);
 				}
 			}
 		}

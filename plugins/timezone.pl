@@ -38,6 +38,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching timezone v.".$VERSION);
+	::rptMsg("timezone v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -66,8 +68,8 @@ sub pluginmain {
 				my $bias   = $tz_vals{"Bias"}/60;
 				my $atbias = $tz_vals{"ActiveTimeBias"}/60;
 				
-				::rptMsg("  Bias           -> ".$tz_vals{"ActiveTimeBias"}." (".$bias." hours)");
-				::rptMsg("  ActiveTimeBias -> ".$tz_vals{"Bias"}." (".$atbias." hours)");
+				::rptMsg("  Bias           -> ".$tz_vals{"Bias"}." (".$bias." hours)");
+				::rptMsg("  ActiveTimeBias -> ".$tz_vals{"ActiveTimeBias"}." (".$atbias." hours)");
 				
 			}
 			else {

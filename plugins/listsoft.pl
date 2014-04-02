@@ -37,6 +37,8 @@ sub pluginmain {
 	my $reg = Parse::Win32Registry->new($file);
 	my $root_key = $reg->get_root_key;
 	::logMsg("Launching listsoft v.".$VERSION);
+	::rptMsg("listsoft v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my %soft;
 	my $key_path = 'Software';
 	my $key;

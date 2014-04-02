@@ -36,6 +36,8 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching compdesc v.".$VERSION);
+	::rptMsg("compdesc v.".$VERSION); # banner
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 

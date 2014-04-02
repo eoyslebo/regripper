@@ -1,7 +1,12 @@
 #-----------------------------------------------------------
-# vista_bitbucket
-# BitBucket settings for Vista $Recylce.bin are maintained on a 
-# per-user, per-volume basis 
+# vista_bitbucket.pl
+#   BitBucket settings for Vista $Recylce.bin are maintained on a 
+#   per-user, per-volume basis 
+#
+# Change history
+#   20110830 [fpi] + banner, no change to the version number
+#
+# References
 #
 # copyright 2008 H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
@@ -31,6 +36,9 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching vista_bitbucket v.".$VERSION);
+    ::rptMsg("vista_bitbucket v.".$VERSION); # 20110830 [fpi] + banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
+
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 

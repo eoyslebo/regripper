@@ -37,7 +37,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching mountdev v.".$VERSION);
 	::rptMsg("mountdev v.".$VERSION);
-	::rptMsg("Get MountedDevices key information from the System hive file.");
+	::rptMsg("(".getHive().") ".getShortDescr()."\n"); #banner
 	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;

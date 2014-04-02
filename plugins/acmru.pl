@@ -36,6 +36,8 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching acmru v.".$VERSION);
+	::rptMsg("acmru v.".$VERSION); # banner
+    ::rptMsg("- ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
@@ -62,12 +64,10 @@ sub pluginmain {
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 

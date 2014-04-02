@@ -5,7 +5,8 @@
 # TypedURLs values 
 #
 # Change history
-#
+#   20120827 - TLN version created
+#   20080324 - created
 #
 # References
 #   http://support.microsoft.com/kb/157729
@@ -48,6 +49,8 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching typedurls v.".$VERSION);
+	::rptMsg("typedurls v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	

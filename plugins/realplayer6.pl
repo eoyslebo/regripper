@@ -38,10 +38,11 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching realplayer6 v.".$VERSION);
+	::rptMsg("realplayer6 v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
-	::rptMsg("Realplayer6 v.".$VERSION);
-
+	
 	my $key_path = "Software\\RealNetworks\\RealPlayer\\6.0\\Preferences";   
 	my $key = $root_key->get_subkey($key_path);
 	if ($key) {

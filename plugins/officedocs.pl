@@ -35,6 +35,8 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching officedocs v.".$VERSION);
+	::rptMsg("officedocs v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	::rptMsg("officedocs v.".$VERSION);
@@ -56,19 +58,20 @@ sub pluginmain {
 		my $of_key = $root_key->get_subkey($key_path);
 		if ($of_key) {
 # Attempt to retrieve Word docs			
-			my @funcs = ("Save As","File Save");
+			my @funcs = ("Open","Save As","File Save");
 			foreach my $func (@funcs) {
 				my $word = "Common\\Open Find\\Microsoft Office Word\\Settings\\".$func."\\File Name MRU";
 				my $word_key = $of_key->get_subkey($word);
 				if ($word_key) {
 					::rptMsg($word);
 					::rptMsg("LastWrite Time ".gmtime($word_key->get_timestamp())." (UTC)");
+					::rptMsg("");
 					my $value = $word_key->get_value("Value")->get_data();
 					my @data = split(/\00/,$value);
-					map{::rptMsg("\t$_");}@data;
+					map{::rptMsg("$_");}@data;
 				}
 				else {
-					::rptMsg("Could not access ".$word);
+#					::rptMsg("Could not access ".$word);
 				}
 				::rptMsg("");
 			}

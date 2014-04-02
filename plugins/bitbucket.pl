@@ -2,7 +2,12 @@
 # bitbucket
 # Get HKLM\..\BitBucket keys\values (if any)
 # 
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# Change history
+#   20091020 - Updated; collected additional values
+#
+# References
+#
+# copyright 2009 H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package bitbucket;
 use strict;
@@ -30,6 +35,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching bitbucket v.".$VERSION);
+	::rptMsg("bitbucket v.".$VERSION); # banner
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -39,16 +46,16 @@ sub pluginmain {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 		::rptMsg("");
-		my $nuke;
+		
 		eval {
-			$nuke = $key->get_value("NukeOnDelete")->get_data();
+			my $global = $key->get_value("UseGlobalSettings")->get_data();
+			::rptMsg("UseGlobalSettings = ".$global);
 		};
-		if ($@) {
-			::rptMsg("NukeOnDelete value not found.");
-		}
-		else {
-			::rptMsg("NukeOnDelete value = ".$nuke);
-		}
+		
+		eval {
+			my $nuke = $key->get_value("NukeOnDelete")->get_data();
+			::rptMsg("NukeOnDelete      = ".$nuke);
+		};	
 		::rptMsg("");
 		
 		my @subkeys = $key->get_list_of_subkeys();

@@ -28,6 +28,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching networkcards v.".$VERSION);
+	::rptMsg("networkcards v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key_path = "Microsoft\\Windows NT\\CurrentVersion\\NetworkCards";
