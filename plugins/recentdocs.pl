@@ -2,10 +2,11 @@
 # recentdocs.pl
 # Plugin for Registry Ripper 
 # Parses RecentDocs keys/values in NTUSER.DAT 
-# 
-# Same as recentdocs.pl, except output is ordered differently
 #
 # Change history
+#    20100405 - Updated to use Encode::decode to translate strings
+#    20090115 - Minor update to keep plugin from printing terminating
+#               MRUListEx value of 0xFFFFFFFF
 #    20080418 - Minor update to address NTUSER.DAT files that have
 #               MRUList values in this key, rather than MRUListEx
 #               values
@@ -13,17 +14,18 @@
 # References
 #
 # 
-# copyright 2008 H. Carvey
+# copyright 2010 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package recentdocs;
 use strict;
+use Encode;
 
 my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080418);
+              version       => 20100405);
 
 sub getShortDescr {
 	return "Gets contents of user's RecentDocs key";	
@@ -39,13 +41,15 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching recentdocs v.".$VERSION);
+	::rptMsg("recentdocs v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
 	my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs";
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
-		::rptMsg("RecentDocs - recentdocs");
+		::rptMsg("RecentDocs");
 		::rptMsg("**All values printed in MRUList\\MRUListEx order.");
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
@@ -98,25 +102,22 @@ sub pluginmain {
 					foreach my $i (@list) {
 						::rptMsg("  ".$i." = ".$rdvals{$i});
 					}
+					
 					::rptMsg("");
 				}
 				else {
 					::rptMsg($key_path." has no values.");
-					::logMsg("Error: ".$key_path." has no values.");
 				}
 			}
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
-
 
 
 sub getRDValues {
@@ -138,11 +139,17 @@ sub getRDValues {
 				elsif ($name eq "MRUListEx") {
 					@mru = unpack("V*",$data);
 				}
+# Horrible, ugly cludge; the last, terminating value in MRUListEx
+# is 0xFFFFFFFF, so we remove it.
+				pop(@mru);
 				$rdvals{$name} = join(',',@mru);
 			}
 			else {
-				my $file = (split(/\00\00/,$data))[0];
-				$file =~ s/\00//g;
+# New code
+				$data = decode("ucs-2le", $data);
+				my $file = (split(/\00/,$data))[0];
+#				my $file = (split(/\00\00/,$data))[0];
+#				$file =~ s/\00//g;
 				$rdvals{$name} = $file;
 			}
 		}

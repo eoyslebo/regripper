@@ -1,7 +1,13 @@
 #-----------------------------------------------------------
-# removdev
-# Parse Microsoft\Windows Portable Devices\Devices key on Vista
-# Get historical information about drive letter assigned to devices
+# removdev.pl
+#   Parse Microsoft\Windows Portable Devices\Devices key on Vista
+#   Get historical information about drive letter assigned to devices
+#
+# Change history
+#   20090118 [hca] * changed the name of the plugin from "removdev"
+#   20110830 [fpi] + banner, no change to the version number
+#
+# References
 #
 # NOTE: Credit for "discovery" goes to Rob Lee
 #
@@ -33,6 +39,9 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching removdev v.".$VERSION);
+    ::rptMsg("removdev v.".$VERSION); # 20110830 [fpi] + banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
+
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 

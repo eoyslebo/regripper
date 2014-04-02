@@ -21,7 +21,7 @@ my %config = (hive          => "System",
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Lists services/drivers in Services key by LastWrite times, short format";	
+	return "Lists services/drivers in Services key by LastWrite times (short format)";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -48,6 +48,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching svc v.".$VERSION);
+	::rptMsg("svc v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is

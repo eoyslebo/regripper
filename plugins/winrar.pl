@@ -2,6 +2,10 @@
 # winrar.pl
 # Get WinRAR\ArcHistory entries
 #
+# History
+#   20080819 - created
+#
+#
 # copyright 2008 H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package winrar;
@@ -30,6 +34,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching winrar v.".$VERSION);
+	::rptMsg("winrar v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 

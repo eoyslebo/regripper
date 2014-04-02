@@ -4,23 +4,26 @@
 # MountedDevices
 # 
 # Change history
-#
+#   20120403 - commented out time stamp info from volume GUIDs, added
+#              listing of unique MAC addresses
+#   20120330 - updated to parse the Volume GUIDs to get the time stamps
+#   20091116 - changed output
 #
 # References
 #
 # 
-# copyright 2008 H. Carvey
+# copyright 2012 Quantum Analytics Research, LLC
+# Author: H. Carvey
 #-----------------------------------------------------------
 package mountdev2;
 use strict;
-use Encode;
 
 my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080324);
+              version       => 20120403);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -38,11 +41,13 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching mountdev2 v.".$VERSION);
 	::rptMsg("");
+	::rptMsg("mountdev2 v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key_path = 'MountedDevices';
 	my $key;
-	my %md;
+	my (%md,%dos,%vol,%macs);
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite time = ".gmtime($key->get_timestamp())."Z");
@@ -54,8 +59,8 @@ sub pluginmain {
 				my $len = length($data);
 				if ($len == 12) {
 					my $sig = _translateBinary(substr($data,0,4));
-					::rptMsg($v->get_name());
-					::rptMsg("\tDrive Signature = ".$sig);
+#					my $sig = _translateBinary($data);
+					$vol{$v->get_name()} = $sig;
 				}
 				elsif ($len > 12) {
 					$data =~ s/\00//g;
@@ -66,13 +71,58 @@ sub pluginmain {
 				}
 			}
 			
+			::rptMsg(sprintf "%-50s  %-20s","Volume","Disk Sig");
+			::rptMsg(sprintf "%-50s  %-20s","-------","--------");
+			foreach my $v (sort keys %vol) {
+				my $str = sprintf "%-50s  %-20s",$v,$vol{$v};
+				::rptMsg($str);
+			}
 			::rptMsg("");
-			foreach my $m (keys %md) {
+			foreach my $v (sort keys %vol) {
+				next unless ($v =~ m/^\\\?\?\\Volume{/);
+				my $id = $v;
+				$id =~ s/^\\\?\?\\Volume{//;
+				$id =~ s/}$//;
+				$id =~ s/-//g;
+				my $l = hex(substr($id,0,8));
+				my $m = hex(substr($id,8,4));
+				my $h = hex(substr($id,12,4)) & 0x0fff;
+				my $h = $m | $h << 16;
+				my $t = (::getTime($l,$h) - 574819200);
+				::rptMsg($v);
+				::rptMsg("  ".gmtime($t));
+			}
+			
+			::rptMsg("");
+			foreach my $m (sort keys %md) {
 				::rptMsg("Device: ".$m);
 				foreach my $item (@{$md{$m}}) {
-					::rptMsg("\t".$item);
+					
+					if ($item =~ m/^\\\?\?\\Volume/) {
+						my $id = $item;
+						$id =~ s/^\\\?\?\\Volume{//;
+						$id =~ s/}$//;
+#						$id =~ s/-//g;
+#						my $l = hex(substr($id,0,8));
+#						my $m = hex(substr($id,8,4));
+#						my $h = hex(substr($id,12,4)) & 0x0fff;
+#						my $h = $m | $h << 16;
+#						my $t = (::getTime($l,$h) - 574819200);
+#						$item .= "  ".gmtime($t);
+						my $m = (split(/-/,$id,5))[4];
+						$m = uc($m);
+						$m = join(':',unpack("(A2)*",$m));
+						$macs{$m} = 1;
+					}
+					
+					::rptMsg("  ".$item);
 				}
 				::rptMsg("");
+			}
+			::rptMsg("");
+			::rptMsg("Unique MAC Addresses:");
+			foreach (keys %macs) {
+				::rptMsg($_);
 			}
 		}
 		else {

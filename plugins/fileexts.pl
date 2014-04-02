@@ -29,6 +29,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching fileexts v.".$VERSION);
+	::rptMsg("fileexts v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 

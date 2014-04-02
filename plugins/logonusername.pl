@@ -35,6 +35,8 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching logonusername v.".$VERSION);
+	::rptMsg("logonusername v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	

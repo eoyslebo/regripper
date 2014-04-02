@@ -20,7 +20,7 @@ my %config = (hive          => "Software",
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Get and display the contents of the Windows\\CurrentVersion key";	
+	return "Get & display the contents of the Windows NT\\CurrentVersion key";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -33,6 +33,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching winnt_cv v.".$VERSION);
+	::rptMsg("winnt_cv v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key_path = "Microsoft\\Windows NT\\CurrentVersion";

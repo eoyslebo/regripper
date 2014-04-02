@@ -1,22 +1,42 @@
 #-----------------------------------------------------------
 # samparse.pl
 # Parse the SAM hive file for user/group membership info
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+#
+# Change history:
+#    20120722 - updated %config hash
+#    20110303 - Fixed parsing of SID, added check for account type
+#               Acct type determined based on Dustin Hulburt's "Forensic
+#               Determination of a User's Logon Status in Windows" 
+#               from 10 Aug 2009 (link below)
+#    20100712 - Added References entry
+#    20091020 - Added extracting UserPasswordHint value
+#    20090413 - Added account creation date
+#    20080415 - created
+#
+# References
+#    Source available here: http://pogostick.net/~pnh/ntpasswd/
+#    http://accessdata.com/downloads/media/Forensic_Determination_Users_Logon_Status.pdf
+#
+# copyright 2012 Quantum Analytics Research, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package samparse;
 use strict;
 
 my %config = (hive          => "SAM",
-              osmask        => 22,
+              hivemask      => 2,
+              output        => "report",
+              category      => "",
+              osmask        => 63, #XP - Win8
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              version       => 20080415);
+              version       => 20120722);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Parse SAM file for user/group mbrshp info";	
+	return "Parse SAM file for user & group mbrshp info";	
 }
 sub getDescr{}
 sub getRefs {
@@ -39,11 +59,17 @@ my %acb_flags = (0x0001 => "Account Disabled",
                  0x0100 => "Server trust account",
                  0x0200 => "Password does not expire",
                  0x0400 => "Account auto locked");
-
+                 
+my %types = (0xbc => "Default Admin User",
+             0xd4 => "Custom Limited Acct",
+             0xb0 => "Default Guest Acct");
+             
 sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching samparse v.".$VERSION);
+	::rptMsg("samparse v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	::rptMsg("");
@@ -65,17 +91,41 @@ sub pluginmain {
 					my %v_val = parseV($v);
 					$rid =~ s/^0000//;
 					$rid = hex($rid);
-
+					
+					my $c_date;
+					eval {
+						my $create_path = $key_path."\\Names\\".$v_val{name};
+						if (my $create = $root_key->get_subkey($create_path)) {
+							$c_date = $create->get_timestamp();
+						}
+					};
+				
 					::rptMsg("Username        : ".$v_val{name}." [".$rid."]");
 					::rptMsg("Full Name       : ".$v_val{fullname});
 					::rptMsg("User Comment    : ".$v_val{comment});
+					::rptMsg("Account Type    : ".$v_val{type});
+					::rptMsg("Account Created : ".gmtime($c_date)." Z") if ($c_date > 0); 
 					
 					my $f_value = $u->get_value("F");
 					my $f = $f_value->get_data();
 					my %f_val = parseF($f);
-					::rptMsg("Last Login Date : ".gmtime($f_val{last_login_date})." Z");
-					::rptMsg("Pwd Reset Date  : ".gmtime($f_val{pwd_reset_date})." Z");
-					::rptMsg("Pwd Fail Date   : ".gmtime($f_val{pwd_fail_date})." Z");;
+					
+					my $lastlogin;
+					my $pwdreset;
+					my $pwdfail;
+					($f_val{last_login_date} == 0) ? ($lastlogin = "Never") : ($lastlogin = gmtime($f_val{last_login_date})." Z");
+					($f_val{pwd_reset_date} == 0) ? ($pwdreset = "Never") : ($pwdreset = gmtime($f_val{pwd_reset_date})." Z");
+					($f_val{pwd_fail_date} == 0) ? ($pwdfail = "Never") : ($pwdfail = gmtime($f_val{pwd_fail_date})." Z");
+					
+					my $pw_hint;
+					eval {
+						$pw_hint = $u->get_value("UserPasswordHint")->get_data();
+						$pw_hint =~ s/\00//g;
+					};
+					::rptMsg("Password Hint   : ".$pw_hint) unless ($@);
+					::rptMsg("Last Login Date : ".$lastlogin);
+					::rptMsg("Pwd Reset Date  : ".$pwdreset);
+					::rptMsg("Pwd Fail Date   : ".$pwdfail);
 					::rptMsg("Login Count     : ".$f_val{login_count});
 					foreach my $flag (keys %acb_flags) {
 						::rptMsg("  --> ".$acb_flags{$flag}) if ($f_val{acb_flags} & $flag);
@@ -173,7 +223,8 @@ sub parseV {
 	my $v = shift;
 	my %v_val = ();
 	my $header = substr($v,0,44);
-	my @vals = unpack("V*",$header);    
+	my @vals = unpack("V*",$header);   
+	$v_val{type}     = $types{$vals[1]}; 
 	$v_val{name}     = _uniToAscii(substr($v,($vals[3] + 0xCC),$vals[4]));
 	$v_val{fullname} = _uniToAscii(substr($v,($vals[6] + 0xCC),$vals[7])) if ($vals[7] > 0);
 	$v_val{comment}  = _uniToAscii(substr($v,($vals[9] + 0xCC),$vals[10])) if ($vals[10] > 0);
@@ -215,7 +266,7 @@ sub parseCUsers {
 				$count += 12;
 			}
 			elsif ($tmp == 0x501) {
-				$members{_translateSID(substr($cv,$ofs,26))} = 1;
+				$members{_translateSID(substr($cv,$ofs,28))} = 1;
 				$count += 28;
 			}
 			else {
@@ -257,8 +308,8 @@ sub _translateSID {
 		$dashes   = unpack("C",substr($sid,1,1));
 		$idauth   = unpack("H*",substr($sid,2,6));
 		$idauth   =~ s/^0+//g;
-		my @sub   = unpack("V*",substr($sid,8,($len-2)));
-		my $rid   = unpack("v",substr($sid,24,2));
+		my @sub   = unpack("V4",substr($sid,8,16));
+		my $rid   = unpack("V",substr($sid,24,4));
 		my $s = join('-',@sub);
 		return "S-".$revision."-".$idauth."-".$s."-".$rid;
 	}

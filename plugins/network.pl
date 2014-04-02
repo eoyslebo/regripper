@@ -39,6 +39,8 @@ sub pluginmain {
 	my %nics;
 	my $ccs;
 	::logMsg("Launching network v.".$VERSION);
+	::rptMsg("network v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is

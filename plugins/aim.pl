@@ -28,6 +28,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching aim plugin v.".$VERSION);
+	::rptMsg("aim v.".$VERSION); # banner
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key_path = 'Software\\America Online\\AOL Instant Messenger (TM)\\CurrentVersion\\Users';

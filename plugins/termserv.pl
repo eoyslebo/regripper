@@ -3,12 +3,23 @@
 # Plugin for Registry Ripper; 
 # 
 # Change history
+#   20130307 - updated with autostart locations
+#   20100713 - Updated to include additional values, based on references
+#   20100119 - updated
+#   20090727 - created
 #
+# Category: Autostart
 #
 # References
+#   Change TS listening port number - http://support.microsoft.com/kb/187623
+#   Examining TS key - http://support.microsoft.com/kb/243215
+#   Win2K8 TS stops listening - http://support.microsoft.com/kb/954398
+#   XP/Win2K3 TSAdvertise value - http://support.microsoft.com/kb/281307
+#   AllowTSConnections value - http://support.microsoft.com/kb/305608
+#   TSEnabled value - http://support.microsoft.com/kb/222992
+#   TSUserEnabled value - http://support.microsoft.com/kb/238965
 #   
-# 
-# copyright 2008 H. Carvey
+# copyright 2010 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package termserv;
 use strict;
@@ -18,11 +29,11 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080418);
+              version       => 20130307);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Gets fDenyTSConnections value from System hive";	
+	return "Gets Terminal Server values from System hive";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -49,27 +60,102 @@ sub pluginmain {
 		my $ts_path = $ccs."\\Control\\Terminal Server";
 		my $ts;
 		if ($ts = $root_key->get_subkey($ts_path)) {
-			::rptMsg($ts_path." key, fDenyTSConnections value");
+			::rptMsg($ts_path);
 			::rptMsg("LastWrite Time ".gmtime($ts->get_timestamp())." (UTC)");
+			::rptMsg("");
+			::rptMsg("Reference: http://support.microsoft.com/kb/243215");
+			::rptMsg("");
+			
+			my $ver;
+			eval {
+				$ver = $ts->get_value("ProductVersion")->get_data();
+				::rptMsg("  ProductVersion = ".$ver);
+			};
+			::rptMsg("");
+			
 			my $fdeny;
 			eval {
-				if ($fdeny = $ts->get_value("fDenyTSConnections")->get_data()) {
-					::rptMsg("  fDenyTSConnections = ".$fdeny);
-				}
-				else {
-					::rptMsg("fDenyTSConnections value not found.");
-				}
+				$fdeny = $ts->get_value("fDenyTSConnections")->get_data();
+				::rptMsg("  fDenyTSConnections = ".$fdeny);
+				::rptMsg("  1 = connections denied");
 			};
 			::rptMsg("fDenyTSConnections value not found.") if ($@);
+			::rptMsg("");
+			
+			my $allow;
+			eval {
+				$allow = $ts->get_value("AllowTSConnections")->get_data();
+				::rptMsg("  AllowTSConnections = ".$allow);
+				::rptMsg("  Ref: http://support.microsoft.com/kb/305608");
+			};
+			::rptMsg("");
+			
+			my $ad;
+			eval {
+				$ad = $ts->get_value("TSAdvertise")->get_data();
+				::rptMsg("  TSAdvertise = ".$ad);
+				::rptMsg("  0 = disabled, 1 = enabled (advertise Terminal Services)");
+				::rptMsg("  Ref: http://support.microsoft.com/kb/281307");
+			};
+			::rptMsg("");
+			
+			my $enabled;
+			eval {
+				$enabled = $ts->get_value("TSEnabled")->get_data();
+				::rptMsg("  TSEnabled = ".$enabled);
+				::rptMsg("  0 = disabled, 1 = enabled (Terminal Services enabled)");
+				::rptMsg("  Ref: http://support.microsoft.com/kb/222992");
+			};
+			::rptMsg("");
+			
+			my $user;
+			eval {
+				$user = $ts->get_value("TSUserEnabled")->get_data();
+				::rptMsg("  TSUserEnabled = ".$user);
+				::rptMsg("  1 = All users logging in are automatically part of the");
+				::rptMsg("  built-in Terminal Server User group. 0 = No one is a");
+				::rptMsg("  member of the built-in group.");
+				::rptMsg("  Ref: http://support.microsoft.com/kb/238965");
+			};
+			::rptMsg("");
+			
+			my $help;
+			eval {
+				$help = $ts->get_value("fAllowToGetHelp")->get_data();
+				::rptMsg("  fAllowToGetHelp = ".$user);
+				::rptMsg("  1 = Users can request assistance from friend or a ");
+				::rptMsg("  support professional.");
+				::rptMsg("  Ref: http://www.pctools.com/guides/registry/detail/1213/");
+			};
+			
+			::rptMsg("AutoStart Locations");
+			eval {
+				my $start = $ts->get_subkey("Wds\\rdpwd")->get_value("StartupPrograms")->get_data();
+				::rptMsg("Wds\\rdpwd key");
+				::rptMsg("  StartupPrograms: ".$start);
+				::rptMsg("Analysis Tip: This value usually contains 'rdpclip'; any additional entries ");
+				::rptMsg("should be investigated\.");
+				::rptMsg("");
+			};
+			::rptMsg("  StartupPrograms value not found\.") if ($@);
+			
+			eval {
+				my $init = $ts->get_subkey("WinStations\\RDP-Tcp")->get_value("InitialProgram")->get_data();
+				::rptMsg("WinStations\\RDP-Tcp key");
+				$init = "{blank}" if ($init eq "");
+				::rptMsg("  InitialProgram: ".$init);
+				::rptMsg("Analysis Tip: Maybe be empty; appears as '{blank}'");
+			};
+			::rptMsg(" InitialProgram value not found\.") if ($@);
+			
+	
 		}
 		else {
 			::rptMsg($ts_path." not found.");
-			::logMsg($ts_path." not found.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

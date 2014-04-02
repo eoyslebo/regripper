@@ -45,6 +45,8 @@ sub pluginmain {
 	my %nics;
 	my $ccs;
 	::logMsg("Launching nic_mst2 v.".$VERSION);
+	::rptMsg("nic_mst2 v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is

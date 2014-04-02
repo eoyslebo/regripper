@@ -4,7 +4,7 @@
 # RunMru values 
 #
 # Change history
-#
+#   20080324 - created
 #
 # References
 #
@@ -36,6 +36,8 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching runmru v.".$VERSION);
+	::rptMsg("runmru v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 

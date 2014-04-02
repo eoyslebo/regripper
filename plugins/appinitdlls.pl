@@ -1,8 +1,17 @@
 #-----------------------------------------------------------
 # appinitdlls
 #
+# Change history:
+#  20130425 - added alertMsg() functionality
+#  20130305 - updated to address 64-bit systems
+#  20080324 - created
+# 
+# Ref:
+#  http://msdn.microsoft.com/en-us/library/windows/desktop/dd744762(v=vs.85).aspx
+#  http://support.microsoft.com/kb/q197571
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# copyright 2013 QAR,LLC 
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package appinitdlls;
 use strict;
@@ -12,7 +21,7 @@ my %config = (hive          => "Software",
               hasDescr      => 0,
               hasRefs       => 1,
               osmask        => 22,
-              version       => 20080324);
+              version       => 20130425);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -32,30 +41,53 @@ my $VERSION = getVersion();
 sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
-	::logMsg("Launching appinitdlls v.".$VERSION);
+	::rptMsg("Launching appinitdlls v.".$VERSION);
+	::rptMsg("appinitdlls v.".$VERSION); # banner
+	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	my @paths = ('Microsoft\\Windows NT\\CurrentVersion\\Windows',
+	         'Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\Windows');
+	
+	::rptMsg("AppInit_DLLs");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
-
-	my $key_path = 'Microsoft\\Windows NT\\CurrentVersion\\Windows';
-	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
-		::rptMsg("AppInit_DLLs");
-		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
-		::rptMsg("");
-		my @vals = $key->get_list_of_values();
-		foreach my $v (@vals) {
-			my $name = $v->get_name();
-			if ($name eq "AppInit_DLLs") {
-				my $data = $v->get_data();
-				$data = "{blank}" if ($data eq "");
-				::rptMsg($name." -> ".$data);
-			}
+	
+	foreach my $key_path (@paths) {
+		my $key;
+		if ($key = $root_key->get_subkey($key_path)) {
+			::rptMsg($key_path);
+			::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+			
+			eval {
+				my $app = $key->get_value("AppInit_DLLs")->get_data();
+				
+				if ($app eq "") {
+					$app = "{blank}";
+				}
+				else {
+					::alertMsg("ALERT: appinitdlls: Entry not blank: ".$app);
+				}
+				::rptMsg("  AppInit_DLLs : ".$app);
+			};
+			
+			eval {
+				my $load = $key->get_value("LoadAppInit_DLLs")->get_data();
+				::rptMsg("  LoadAppInit_DLLs : ".$load);
+				::rptMsg("*LoadAppInit_DLLs value globally enables/disables AppInit_DLLS\.");
+				::rptMsg("0 = disabled (default)");
+			};
+			
+			eval {
+				my $req = $key->get_value("RequireSignedAppInit_DLLs")->get_data();
+				::rptMsg("  RequireSignedAppInit_DLLs : ".$req);
+			};
+			
+			::rptMsg("");
+		}
+		else {
+			::rptMsg($key_path." not found.");
 		}
 	}
-	else {
-		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
-	}
+	::rptMsg("Analysis Tip: The AppInit_DLLs value should be blank; any DLL listed");
+	::rptMsg("is launched with each user-mode process\.  ");
 }
 1;

@@ -164,7 +164,7 @@ if ($config{plugin}) {
 		
 # check to see if the plugin exists
 	my $plugin = $config{plugin};
-	my $pluginfile = $plugindir.$config{plugin}."\.pl";
+	my $pluginfile = File::Spec->catfile($plugindir, $config{plugin}."\.pl");
 	die $pluginfile." not found.\n" unless (-e $pluginfile);
 	
 	eval {

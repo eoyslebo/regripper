@@ -4,12 +4,12 @@
 # computername
 # 
 # Change history
-#
+#   20090727 - added Hostname
 #
 # References
-#
+#   http://support.microsoft.com/kb/314053/
 # 
-# copyright 2008 H. Carvey
+# copyright 2009 H. Carvey
 #-----------------------------------------------------------
 package compname;
 use strict;
@@ -19,11 +19,11 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080324);
+              version       => 20090727);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Gets ComputerName value from System hive";	
+	return "Gets ComputerName and Hostname values from System hive";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -36,22 +36,24 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching compname v.".$VERSION);
+	::rptMsg("compname v.".$VERSION); # banner
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
 # going to be used over and over again in plugins that access the system
 # file
-	my $current;
+	my ($current,$ccs);
 	my $key_path = 'Select';
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		$current = $key->get_value("Current")->get_data();
-		my $ccs = "ControlSet00".$current;
+		$ccs = "ControlSet00".$current;
 		my $cn_path = $ccs."\\Control\\ComputerName\\ComputerName";
 		my $cn;
 		if ($cn = $root_key->get_subkey($cn_path)) {
 			my $name = $cn->get_value("ComputerName")->get_data();
-			::rptMsg("ComputerName = ".$name);
+			::rptMsg("ComputerName    = ".$name);
 		}
 		else {
 			::rptMsg($cn_path." not found.");
@@ -62,6 +64,14 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 		::logMsg($key_path." not found.");
 	}
+	
+	my $hostname;
+	eval {
+		my $host_path = $ccs."\\Services\\Tcpip\\Parameters";
+		$hostname = $root_key->get_subkey($host_path)->get_value("Hostname")->get_data();
+		::rptMsg("TCP/IP Hostname = ".$hostname);
+	};
+	
 }
 
 1;

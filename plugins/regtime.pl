@@ -23,7 +23,7 @@ my %config = (hive          => "All",
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Dumps entire hive, all keys sorted by LastWrite time";	
+	return "Dumps entire hive - all keys sorted by LastWrite time";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -40,7 +40,8 @@ sub pluginmain {
 	my $reg = Parse::Win32Registry->new($file);
 	my $root_key = $reg->get_root_key;
 	::logMsg("Launching regtime v.".$VERSION);
-	
+	::rptMsg("regtime v.".$VERSION); # banner
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	traverse($root_key);
 
 	foreach my $t (reverse sort {$a <=> $b} keys %regkeys) {
