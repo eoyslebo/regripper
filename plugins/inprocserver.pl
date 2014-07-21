@@ -4,6 +4,7 @@
 # Can take considerable time to run; recommend running it via rip.exe
 #
 # History
+#   20130603 - updated alert functionality
 #   20130429 - added alertMsg() functionality
 #   20130212 - fixed retrieving LW time from correct key
 #   20121213 - created
@@ -27,7 +28,7 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20130429);
+              version       => 20130603);
 
 sub getConfig{return %config}
 
@@ -67,26 +68,9 @@ sub pluginmain {
 				my $name = $s->get_name();
 				eval {
 					my $n = $s->get_subkey("InprocServer32")->get_value("")->get_data();
-					if (($n =~ m/^C:\\Users/) || grep(/Recycle/,$n) || grep(/RECYCLE/,$n) || grep(/globalroot/,$n) || $n =~ m/\\n\.$/) {
-						my $lw = $s->get_subkey("InprocServer32")->get_timestamp();
-						$susp{$lw}{name} = $name;
-						$susp{$lw}{data} = $n;
-					}
+					alertCheckPath($n);
 				};
 				
-			}
-			
-			if (scalar(keys %susp) > 0) {
-				foreach my $t (sort {$a <=> $b} keys %susp) {
-					::rptMsg("Key path: ".$key_path."\\".$susp{$t}{name});
-					::rptMsg("LastWrite: ".gmtime($t));
-					::rptMsg("Value Data: ".$susp{$t}{data});
-					::alertMsg($key_path."\\".$susp{$t}{name}.": ".$susp{$t}{data});
-					::rptMsg("");
-				}
-			}
-			else {
-				::rptMsg("No suspicious InprocServer32 values found.");
 			}
 		}
 		else {
@@ -97,4 +81,21 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 	}
 }
+
+#-----------------------------------------------------------
+# alertCheckPath()
+#-----------------------------------------------------------
+sub alertCheckPath {
+	my $path = shift;
+	$path = lc($path);
+	my @alerts = ("recycle","globalroot","temp","system volume information","appdata",
+	              "application data","c:\\users");
+	
+	foreach my $a (@alerts) {
+		if (grep(/$a/,$path)) {
+			::alertMsg("ALERT: inprocserver: ".$a." found in path: ".$path);              
+		}
+	}
+}
+
 1;

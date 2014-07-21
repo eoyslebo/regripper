@@ -4,16 +4,18 @@
 # MountedDevices
 # 
 # Change history
+#   20130530 - updated to output Disk Signature in correct format, thanks to
+#              info provided by Tom Yarrish (see ref.)
 #   20120403 - commented out time stamp info from volume GUIDs, added
 #              listing of unique MAC addresses
 #   20120330 - updated to parse the Volume GUIDs to get the time stamps
 #   20091116 - changed output
 #
 # References
-#
+#   http://blogs.technet.com/b/markrussinovich/archive/2011/11/08/3463572.aspx
 # 
-# copyright 2012 Quantum Analytics Research, LLC
-# Author: H. Carvey
+# copyright 2013 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package mountdev2;
 use strict;
@@ -179,7 +181,7 @@ sub _translateBinary {
 	foreach (0..($len/2)) {
 		push(@list,$nstr[$_*2].$nstr[($_*2)+1]);
 	}
-	return join(' ',@list);
+	return join(' ',reverse @list);
 }
 
 1;

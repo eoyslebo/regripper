@@ -6,7 +6,7 @@
 #   20130307 - created
 # 
 # Reference: 
-#   
+#   http://carnal0wnage.attackresearch.com/2013/09/stealing-passwords-every-time-they.html
 #
 # Category: Autostart
 # 
@@ -18,6 +18,7 @@ package lsa_packages;
 
 my %config = (hive          => "System",
               hasShortDescr => 1,
+              category      => "malware",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,

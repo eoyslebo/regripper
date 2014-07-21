@@ -13,6 +13,7 @@
 use strict;
 use Win32::GUI();
 use Win32::GUI::Constants qw(CW_USEDEFAULT);
+use Time::Local;
 use Encode;
 
 my $plugindir;

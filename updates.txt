@@ -1,3 +1,130 @@
+20140414 
+	-added knowndev.pl, ddo.pl (J. Chau)
+	-removed streams.pl, streamsmru.pl (also, removed from ntuser profile)
+
+20140409
+	-removed winlivemail.pl, winlivemsn.pl (due to errors)
+
+20140408
+	-updated lsasecrets.pl (improved error message)
+
+20140326
+	-created susclient.pl
+
+20142020
+	-updated recentdocs_tln.pl
+
+20140203
+	-added winscp.pl (not associated with winscp_sessions.pl)
+
+20140131
+	-added reading_locations.pl, from Jason Hale
+
+20140115
+	-updated user_run.pl to look for odd char in paths
+
+20131210
+	-updated crashcontrol.pl
+	-updated amcache.pl
+
+20131118
+	-created cdstaginginfo.pl
+
+20131108
+	-updated svc.pl to look for WOW64 value in service keys; 
+	 indicative of a 32-bit EXE running on a 64-bit OS
+
+20131025
+	-created startup.pl
+
+20131011
+	-created kankan.pl plugin
+
+20131010
+	-created vawtrak.pl
+	-updated svcdll.pl with Derbusi detection
+	-updated svc.pl (Backdoor.Kopdel checks)
+
+20131009
+	-created ahaha.pl
+
+20131008
+	-created opencandy.pl plugin
+
+20131007
+ 	-created lazyshell.pl, comfoo.pl
+ 	-updated imagefile.pl with carnal0wnage link to sticky keys info
+
+20130930
+	-updated appcompatflags.pl to support Win8 Store key
+
+20130925
+	-retired compatassist.pl; functionality rolled into appcompatflags.pl
+
+20130911
+	-updated svc.pl/svc_tln.pl to alert on FailureAction value
+	-updated installedcomp.pl to look for StubPath values that point to
+	 rundll32, but point to other than a .dll (i.e., some malware points to
+	 .cpl files)
+
+20130910 
+	-updated winlogon.pl/winlogon_tln.pl to check for GinaDLL value
+
+20130905
+	-removed winlivemsn.pl from ntuser profile - Module dependencies make it 
+	 throw errors (if I had test data, I'd rewrite it)
+	-updated installedcomp.pl to make the output more searchable
+	-created netsvcs.pl plugin
+
+20130904
+	-created rlo.pl plugin (all hives)
+	-updated backuprestore.pl (cleaned up code)
+
+20130830
+	-updated timezone.pl, based on findings from Mike W.
+
+20130801
+	-added initial Win8 support to appcompatcache.pl
+	-added cross-platform support to rip.pl (File::Spec)
+
+20130731
+  -updated ie_settings.pl
+
+20130711
+  -created pending.pl
+
+20130706
+  -updated appcompatflags.pl to retrieve values from Persisted key
+
+20130630 
+  -updated usbstor.pl - added parsing of Properties values (Win7)
+  -updated devclass.pl - added additional device class check
+
+20130603
+  -updated alert code (new alert function & check for ADSs)
+    -appcompatcache.pl,inprocserver.pl,clsid.pl
+    -appcompatcache_tln.pl,soft_run.pl,user_run.pl,srun_tln.pl,urun_tln.pl
+    -svc.pl,svcdll.pl,svc_tln.pl
+
+20130530 
+  -updated mountdev.pl to address endian issues in display of disk signatures
+
+20130522
+  -minor changes to attachmgr.pl, attachmgr_tln.pl
+
+20130514
+  -updated itempos.pl to parse ItemPos* value data beneath ShellNoRoam\Bags subkeys
+
+20130513
+  -updated userinfo.pl to include UserName value beneath "Common" subkey
+
+20130509
+  -added alert and warnings to appcompatcache.pl, appcompatcache_tln.pl
+  -updated svc.pl, retired svc2.pl
+  -created svc_tln.pl, based on svc.pl
+
+20130504
+  -added alert to Run key plugins to check for %AppData% paths (malware)
 
 20130429
   -created winlogon_tln.pl, applets_tln.pl

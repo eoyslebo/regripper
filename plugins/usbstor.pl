@@ -1,7 +1,15 @@
 #-----------------------------------------------------------
 # usbstor
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# History:
+#		20130630 - added FirstInstallDate, InstallDate query
+#   20080418 - created
+#
+# Ref:
+#   http://studioshorts.com/blog/2012/10/windows-8-device-property-ids-device-enumeration-pnpobject/
+#
+# copyright 2013 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package usbstor;
 use strict;
@@ -11,7 +19,7 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20080418);
+              version       => 20130630);
 
 sub getConfig{return %config}
 
@@ -69,25 +77,36 @@ sub pluginmain {
 						eval {
 							$friendly = $k->get_value("FriendlyName")->get_data();
 						};
-						::rptMsg("    FriendlyName  : ".$friendly) if ($friendly ne "");
+						::rptMsg("    FriendlyName    : ".$friendly) if ($friendly ne "");
 						my $parent;
 						eval {
 							$parent = $k->get_value("ParentIdPrefix")->get_data();
 						};
 						::rptMsg("    ParentIdPrefix: ".$parent) if ($parent ne "");
-					}
+# Attempt to retrieve InstallDate/FirstInstallDate from Properties subkeys	
+# http://studioshorts.com/blog/2012/10/windows-8-device-property-ids-device-enumeration-pnpobject/					
+						
+						eval {
+							my $t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000064\\00000000")->get_value("Data")->get_data();
+							my ($t0,$t1) = unpack("VV",$t);
+							::rptMsg("    InstallDate     : ".gmtime(::getTime($t0,$t1))." UTC");
+							
+							$t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000065\\00000000")->get_value("Data")->get_data();
+							($t0,$t1) = unpack("VV",$t);
+							::rptMsg("    FirstInstallDate: ".gmtime(::getTime($t0,$t1))." UTC");
+						};
+						
+					}					
 				}
 				::rptMsg("");
 			}
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

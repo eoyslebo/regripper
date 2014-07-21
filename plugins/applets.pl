@@ -15,6 +15,7 @@ package applets;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
+              category      => "program execution",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
