@@ -47,7 +47,7 @@ sub pluginmain {
 	my $root_key = $reg->get_root_key;
 	my $key_path = 'MountedDevices';
 	my $key;
-	my (%md,%dos,%vol,%macs);
+	my (%md,%dos,%vol,%offset,%macs);
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite time = ".gmtime($key->get_timestamp())."Z");
@@ -59,8 +59,10 @@ sub pluginmain {
 				my $len = length($data);
 				if ($len == 12) {
 					my $sig = _translateBinary(substr($data,0,4));
+		my $o = ( unpack ("Q", substr($data,4,8)) );
 #					my $sig = _translateBinary($data);
 					$vol{$v->get_name()} = $sig;
+					$offset{$v->get_name()} = $o;
 				}
 				elsif ($len > 12) {
 					$data =~ s/\00//g;
@@ -71,10 +73,10 @@ sub pluginmain {
 				}
 			}
 			
-			::rptMsg(sprintf "%-50s  %-20s","Volume","Disk Sig");
-			::rptMsg(sprintf "%-50s  %-20s","-------","--------");
+			::rptMsg(sprintf "%-50s  %-20s  %20s","Volume","Disk Sig","Offset");
+			::rptMsg(sprintf "%-50s  %-20s  %20s","-------","--------","--------");
 			foreach my $v (sort keys %vol) {
-				my $str = sprintf "%-50s  %-20s",$v,$vol{$v};
+				my $str = sprintf "%-50s  %-20s  %20s",$v,$vol{$v},$offset{$v};
 				::rptMsg($str);
 			}
 			::rptMsg("");
