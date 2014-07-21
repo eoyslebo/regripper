@@ -8,6 +8,13 @@
 # version
 #
 # Change History:
+#  20130429 - minor updates, including not adding .txt files to Profile list
+#  20130425 - added alertMsg() functionality, updated to v2.8
+#  20120505 - Updated to v2.5
+#  20081111 - Updated code in setUpEnv() to parse the file paths for 
+#             output files (log, etc) so that they paths were handled
+#             properly; updated Perl2Exe include statements to support
+#             Parse::Win32Registry 0.40
 #  20080512 - Consolidated Basic and Advanced versions into a single
 #             track
 #  20080429 - Fixed issue with output report and log files having the
@@ -27,21 +34,36 @@
 # Functionality: 
 #   - plugins file is selectable
 # 
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# copyright 2013 Quantum Research Analytics, LLC
+# Author: H. Carvey, keydet89@yahoo.com
+# 
+# This software is released via the GPL v3.0 license:
+# http://www.gnu.org/licenses/gpl.html
 #-----------------------------------------------------------
 #use strict;
 use Win32::GUI();
 use Parse::Win32Registry qw(:REG_);
 
 # Included to permit compiling via Perl2Exe
+#perl2exe_include "Parse/Win32Registry.pm";
 #perl2exe_include "Parse/Win32Registry/Key.pm";
+#perl2exe_include "Parse/Win32Registry/Entry.pm";
 #perl2exe_include "Parse/Win32Registry/Value.pm";
+#perl2exe_include "Parse/Win32Registry/File.pm";
+#perl2exe_include "Parse/Win32Registry/Win95/File.pm";
+#perl2exe_include "Parse/Win32Registry/Win95/Key.pm";
+#perl2exe_include "Encode.pm";
+#perl2exe_include "Encode/Byte.pm";
 #perl2exe_include "Encode/Unicode.pm";
+#perl2exe_include "utf8.pm";
+#perl2exe_include "unicore/Heavy.pl";
+#perl2exe_include "unicore/To/Upper.pl";
 #-----------------------------------------------------------
 # Global variables
 #-----------------------------------------------------------
-my $VERSION = "2\.02";
+my $VERSION = "2\.8";
 my %env; 
+my @alerts = ();
 
 #-----------------------------------------------------------
 # GUI
@@ -59,7 +81,7 @@ my $menu = Win32::GUI::MakeMenu(
 # Create Main Window
 my $main = new Win32::GUI::Window (
     -name     => "Main",
-    -title    => "Registry Ripper, v.".$VERSION,
+    -title    => "RegRipper, v.".$VERSION,
     -pos      => [200, 200],
 # Format: [width, height]
     -maxsize  => [500, 420],
@@ -67,6 +89,10 @@ my $main = new Win32::GUI::Window (
     -menu     => $menu,
     -dialogui => 1,
 ) or die "Could not create a new Window: $!\n";
+
+my $icon_file = "q\.ico";
+my $icon = new Win32::GUI::Icon($icon_file);
+$main->SetIcon($icon);
 
 $main->AddLabel(
     -text   => "Hive File:",
@@ -119,7 +145,7 @@ my $browse2 = $main->AddButton(
 		-text => "Browse");
 
 $main->AddLabel(
-    -text   => "Plugin File:",
+    -text   => "Profile:",
     -left   => 20,
     -top    => 90);
 
@@ -134,6 +160,15 @@ my $combo = $main->AddCombobox(
  -height => 110,
  -tabstop=> 1,
  );
+
+my $testlabel = $main->AddLabel(
+	-text => "",
+	-name => "TestLabel",
+	-pos => [10,140],
+	-size => [445,160],
+	-frame => etched,
+	-sunken => 1
+);
 
 my $report = $main->AddTextfield(
     -name      => "Report",
@@ -166,12 +201,12 @@ $main->AddButton(
 		-text => "Close");
 
 my $status = new Win32::GUI::StatusBar($main,
-		-text  => "Registry Ripper v.".$VERSION." opened.",
+		-text  => "RegRipper v.".$VERSION." opened\.",
 );
 
 populatePluginsList();
 $combo->Text("<Select>");
-$status->Text("Plugins List Populated.");
+$status->Text("Profile List Populated.");
 
 $main->Show();
 Win32::GUI::Dialog();
@@ -187,13 +222,8 @@ sub browse1_Click {
                    -title  => "Open a hive file",
                    -filter => ['All files' => '*.*',],
                    );
-  if (-e $file) {
-  	 $ntuserfile->Text($file);
-
-  } elsif (Win32::GUI::CommDlgExtendedError()) {
-     $main->MessageBox ("ERROR : ".Win32::GUI::CommDlgExtendedError(),
-                        "GetOpenFileName Error");
-  }
+  
+  $ntuserfile->Text($file);
   0;
 }
 
@@ -207,14 +237,9 @@ sub browse2_Click {
                        'All files' => '*.*',
                     ],
                    );
-  if ($file) {
-  	$file = $file."\.txt" unless ($file =~ m/\.\w+$/i);
-  	$rptfile->Text($file);
-
-  } elsif (Win32::GUI::CommDlgExtendedError()) {
-     $main->MessageBox ("ERROR : ".Win32::GUI::CommDlgExtendedError(),
-                        "GetOpenFileName Error");
-  }
+  
+ 	$file = $file."\.txt" unless ($file =~ m/\.\w+$/i);
+ 	$rptfile->Text($file);
   0;
 }
 
@@ -262,29 +287,39 @@ sub go_Click {
 		logMsg($plugins{$i}." complete.");
 		rptMsg("-" x 40);
 	}
+# add output of alerts to the report file here	
+	if (scalar(@alerts) > 0) {
+#		rptMsg("");
+#		rptMsg("Alerts");
+#		rptMsg("-" x 40);
+		foreach my $a (@alerts) {
+			rptMsg($a);
+		}
+	}
+	
 	$report->Append($err_cnt." plugins completed with errors.\r\n");
 	$status->Text("Done.");
 }
 
 sub close_Click {
-	exit 1;
+	$main->Hide();
+	exit -1;
 }
 
 sub Combobox_CloseUp {
-	$status->Text("Plugin File = ".$combo->GetLBText($combo->GetCurSel()));
-	
+	$status->Text("Profile = ".$combo->GetLBText($combo->GetCurSel()));	
 }
-
 
 # About box
 sub RR_OnAbout {
   my $self = shift;
-
   $self->MessageBox(
      "Registry Ripper, v.".$VERSION."\r\n".
-     "Parses Registry hive (NTUSER\.DAT, System, etc.) files, placing pertinent info in a report\r\n".
+     "Parses Registry hive (NTUSER\.DAT, System, etc.) files, placing pertinent info in a report ".
      "file in a readable manner.\r\n".
-     "Copyright 2008 H\. Carvey, keydet89\@yahoo\.com",
+     "\r\n".
+     "Copyright 2013 Quantum Analytics Research, LLC.\r\n".
+     "H\. Carvey, keydet89\@yahoo\.com",
      "About...",
      MB_ICONINFORMATION | MB_OK,
   );
@@ -299,23 +334,40 @@ sub setUpEnv {
 # Ensure that the report file has a .txt extension if none was given
 	$env{rptfile} = $env{rptfile}."\.txt" unless ($env{rptfile} =~ m/\.\w+$/i);
 	$rptfile->Text($env{rptfile});
-	my $tag;
-	($env{rptfile} =~ m/\.log$/) ? ($tag = "\.log2") : ($tag = "\.log");
-	$env{logfile} = ((split(/\./,$env{rptfile}))[0]).$tag;
+	
+	my @path = split(/\\/,$env{rptfile});
+	my $last = scalar(@path) - 1;
+	my @f = split(/\./,$path[$last]);
+	my $ext = $f[scalar(@f) - 1];
+	
+# Assemble path to log file	
+	$f[scalar(@f) - 1] = "log";
+	$path[$last] = join('.',@f);
+	print join('\\',@path)."\n";
+	$env{logfile} = join('\\',@path);
+
+# Use the above code to set up the path to the Timeline
+# (.tln) file	
+# Assemble path to log file	
+#	$f[scalar(@f) - 1] = "tln";
+#	$path[$last] = join('.',@f);
+#	print join('\\',@path)."\n";
+#	$env{tlnfile} = join('\\',@path);
+
 }
 
 #-----------------------------------------------------------
 # get a list of plugins files from the plugins dir
 #-----------------------------------------------------------
-sub getPluginsFiles {
+sub getProfiles {
 	my @pluginfiles;
 	opendir(DIR,"plugins");
 	my @files = readdir(DIR);
 	close(DIR);
 	
 	foreach my $f (@files) {
-		next if ($f =~ m/^\./);
-		next if ($f =~ m/\.pl$/);
+		next if ($f =~ m/^\.$/ || $f =~ m/^\.\.$/);
+		next if ($f =~ m/\.pl$/ || $f =~ m/\.txt$/);
 		push(@pluginfiles,$f);
 	}
 	return @pluginfiles;
@@ -325,7 +377,7 @@ sub getPluginsFiles {
 # populate the list of plugins files
 #-----------------------------------------------------------
 sub populatePluginsList {
-	my @files = getPluginsFiles();
+	my @files = getProfiles();
 	foreach my $f (@files) {
 		$combo->InsertItem($f);
 	}
@@ -374,6 +426,10 @@ sub rptMsg {
 	binmode FH,":utf8";
 	print FH $_[0]."\n";
 	close(FH);
+}
+
+sub alertMsg {
+	push(@alerts,$_[0]);
 }
 
 #-------------------------------------------------------------
