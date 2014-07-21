@@ -1,0 +1,5 @@
+#run the following to run regripper on linux
+
+sed -i.bak  's/c:\\perl\\bin\\perl.exe/\/usr\/bin\/perl/g' *.pl
+dos2unix *.pl plugins/*.pl
+chmod 755 *.pl
