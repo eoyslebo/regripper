@@ -84,8 +84,16 @@ sub pluginmain {
 				my $len = length($data);
 				if ($len == 12) {
 					my $sig = _translateBinary(substr($data,0,4));
-					my $o = ( squad(substr($data,4,8)));
 #					my $sig = _translateBinary($data);
+
+					my $o; #offset
+					eval {
+						$o = ( unpack ("Q", substr($data,4,8)) ); 
+					};
+					if ($@) {
+						$o = ( squad(substr($data,4,8)));
+					}
+
 					$vol{$v->get_name()} = $sig;
 					$offset{$v->get_name()} = $o;
 				}
