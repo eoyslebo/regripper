@@ -18,6 +18,31 @@
 package mountdev2;
 use strict;
 
+# Required for 32-bit versions of perl that don't support unpack Q
+my $little;
+BEGIN { $little= unpack "C", pack "S", 1; }
+sub squad {
+    my( $str )= @_;
+    my $big;
+    if(  ! eval { $big= unpack( "Q", $str ); 1; }  ) {
+        my( $lo, $hi )= unpack $little ? "Ll" : "lL", $str;
+        ( $hi, $lo )= ( $lo, $hi )   if  ! $little;
+        if(  $hi < 0  ) {
+            $hi= ~$hi;
+            $lo= ~$lo;
+            $big= -1 -$lo - $hi*( 1 + ~0 );
+        } else {
+            $big= $lo + $hi*( 1 + ~0 );
+        }
+        if(  $big+1 == $big  ) {
+            warn "Forced to approximate!\n";
+        }
+    }
+    return $big;
+}
+
+
+
 my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
@@ -59,7 +84,7 @@ sub pluginmain {
 				my $len = length($data);
 				if ($len == 12) {
 					my $sig = _translateBinary(substr($data,0,4));
-		my $o = ( unpack ("Q", substr($data,4,8)) );
+					my $o = ( squad(substr($data,4,8)));
 #					my $sig = _translateBinary($data);
 					$vol{$v->get_name()} = $sig;
 					$offset{$v->get_name()} = $o;
