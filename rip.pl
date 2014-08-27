@@ -28,6 +28,9 @@ use strict;
 use Parse::Win32Registry qw(:REG_);
 use Getopt::Long;
 use File::Spec;
+use Cwd 'abs_path';
+use File::Basename;
+
 
 # Included to permit compiling via Perl2Exe
 #perl2exe_include "Parse/Win32Registry.pm";
@@ -60,7 +63,7 @@ $str =~ s/($path[scalar(@path) - 1])//;
 #push(@INC,$str);
 
 #my $plugindir = $str."plugins/";
-my $plugindir = File::Spec->catfile("plugins");
+my $plugindir = (File::Spec->catfile(dirname(abs_path(__FILE__)) , "plugins"));
 #print "Plugins Dir = ".$plugindir."\n";
 # End code update
 my $VERSION = "2\.8_20130801";
